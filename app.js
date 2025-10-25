@@ -2,21 +2,21 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
+require('dotenv').config();
+
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(express.json());
 app.use(cors());
 
-const path=require('path');
 app.use(express.static(path.join(__dirname+'/dist/FrontEnd')));
 // Task2: create mongoDB connection 
-const mongoURI = 'mongodb+srv://mathewgeejo:mathew211411@merntest.5hjng4o.mongodb.net/?appName=merntest';
-mongoose.connect(mongoURI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-}).then(() => {
+const mongoURI = process.env.MONGO_URI;
+mongoose.connect(mongoURI)
+.then(() => {
     console.log('Connected to MongoDB Atlas');
 }).catch((error) => {
     console.error('MongoDB connection error:', error);
@@ -157,8 +157,8 @@ app.put('/api/employeelist/:id', async (req, res) => {
 
 
 //! dont delete this code. it connects the front end file.
-app.get('/*', function (req, res) {
-    res.sendFile(path.join(__dirname + '/dist/Frontend/index.html'));
+app.get('/', function (req, res) {
+    res.sendFile(path.join(__dirname, 'dist', 'Frontend', 'index.html'));
 });
 
 // Start the server
