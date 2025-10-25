@@ -12,7 +12,7 @@ app.use(cors());
 const path=require('path');
 app.use(express.static(path.join(__dirname+'/dist/FrontEnd')));
 // Task2: create mongoDB connection 
-const mongoURI = 'mongodb+srv://your-username:your-password@cluster0.mongodb.net/employeeDB?retryWrites=true&w=majority';
+const mongoURI = 'mongodb+srv://mathewgeejo:mathew211411@merntest.5hjng4o.mongodb.net/?appName=merntest';
 mongoose.connect(mongoURI, {
     useNewUrlParser: true,
     useUnifiedTopology: true
