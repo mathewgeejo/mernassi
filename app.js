@@ -3,6 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 const app = express();
@@ -12,15 +13,25 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(cors());
 
-app.use(express.static(path.join(__dirname+'/dist/FrontEnd')));
+// Serve React build files
+app.use(express.static(path.join(__dirname, 'client/build')));
+// Fallback to existing dist folder
+app.use(express.static(path.join(__dirname, 'dist/FrontEnd')));
 // Task2: create mongoDB connection 
 const mongoURI = process.env.MONGO_URI;
-mongoose.connect(mongoURI)
-.then(() => {
-    console.log('Connected to MongoDB Atlas');
-}).catch((error) => {
-    console.error('MongoDB connection error:', error);
-});
+
+// Handle MongoDB connection
+if (mongoURI) {
+    mongoose.connect(mongoURI)
+    .then(() => {
+        console.log('Connected to MongoDB Atlas');
+    }).catch((error) => {
+        console.error('MongoDB connection error:', error.message);
+        console.log('Server will continue without database connection...');
+    });
+} else {
+    console.log('No MongoDB URI provided. Server will run without database connection.');
+}
 
 // Employee Schema
 const employeeSchema = new mongoose.Schema({
@@ -46,6 +57,20 @@ const Employee = mongoose.model('Employee', employeeSchema);
 
 
 //Task 2 : write api with error handling and appropriate api mentioned in the TODO below
+
+// Middleware to check database connection
+const checkDatabaseConnection = (req, res, next) => {
+    if (mongoose.connection.readyState !== 1) {
+        return res.status(503).json({ 
+            error: 'Database not connected', 
+            message: 'Please check your MongoDB connection and try again' 
+        });
+    }
+    next();
+};
+
+// Apply database check middleware to all API routes
+app.use('/api', checkDatabaseConnection);
 
 
 
@@ -157,8 +182,20 @@ app.put('/api/employeelist/:id', async (req, res) => {
 
 
 //! dont delete this code. it connects the front end file.
+// Serve React app for any non-API routes
 app.get('/', function (req, res) {
-    res.sendFile(path.join(__dirname, 'dist', 'Frontend', 'index.html'));
+    // Check if React build exists, otherwise fallback to dist folder
+    const reactIndex = path.join(__dirname, 'client/build/index.html');
+    const distIndex = path.join(__dirname, 'dist/Frontend/index.html');
+    
+    // Try to serve React build first
+    if (fs.existsSync(reactIndex)) {
+        res.sendFile(reactIndex);
+    } else if (fs.existsSync(distIndex)) {
+        res.sendFile(distIndex);
+    } else {
+        res.send('<h1>Welcome to Employee Management System</h1><p>Please build the frontend or start the React development server.</p>');
+    }
 });
 
 // Start the server
